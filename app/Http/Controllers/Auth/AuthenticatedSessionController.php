@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('laporan.index', absolute: false));
+        return redirect()->route($request->user()->homeRouteName());
     }
 
     /**

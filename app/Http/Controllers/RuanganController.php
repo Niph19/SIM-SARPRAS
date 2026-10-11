@@ -2,63 +2,85 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KategoriSarana;
+use App\Models\Ruangan;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class RuanganController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request): View
     {
-        //
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'id_kategori' => ['nullable', 'integer', 'exists:kategori_saranas,id'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+        $categoryId = $filters['id_kategori'] ?? null;
+        $rooms = Ruangan::query()
+            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search) {
+                $query->where('kode_ruangan', 'like', "%{$search}%")
+                    ->orWhere('nama_ruangan', 'like', "%{$search}%")
+                    ->orWhere('lokasi', 'like', "%{$search}%");
+            }))
+            ->when($categoryId, fn ($query) => $query->whereHas('saranas', fn ($query) => $query->where('id_kategori', $categoryId)))
+            ->withCount('saranas')
+            ->orderBy('nama_ruangan')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('ruangan.index', [
+            'rooms' => $rooms,
+            'search' => $search,
+            'categoryId' => $categoryId,
+            'categories' => KategoriSarana::orderBy('nama_kategori')->get(),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): View
     {
-        //
+        return view('ruangan.form', ['room' => new Ruangan]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        Ruangan::create($request->validate([
+            'kode_ruangan' => ['required', 'string', 'max:50', 'unique:ruangans,kode_ruangan'],
+            'nama_ruangan' => ['required', 'string', 'max:100'],
+            'lokasi' => ['nullable', 'string', 'max:100'],
+        ]));
+
+        return to_route('ruangan.index')->with('success', 'Ruangan berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(Ruangan $ruangan): View
     {
-        //
+        return view('ruangan.form', ['room' => $ruangan]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, Ruangan $ruangan): RedirectResponse
     {
-        //
+        $ruangan->update($request->validate([
+            'kode_ruangan' => ['required', 'string', 'max:50', 'unique:ruangans,kode_ruangan,'.$ruangan->id],
+            'nama_ruangan' => ['required', 'string', 'max:100'],
+            'lokasi' => ['nullable', 'string', 'max:100'],
+        ]));
+
+        return to_route('ruangan.index')->with('success', 'Ruangan berhasil diperbarui.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(Ruangan $ruangan): RedirectResponse
     {
-        //
-    }
+        if ($ruangan->saranas()->exists() || $ruangan->laporan()->exists()) {
+            throw ValidationException::withMessages([
+                'ruangan' => 'Ruangan tidak dapat dihapus karena masih digunakan oleh sarana atau laporan.',
+            ]);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $ruangan->delete();
+
+        return to_route('ruangan.index')->with('success', 'Ruangan berhasil dihapus.');
     }
 }
