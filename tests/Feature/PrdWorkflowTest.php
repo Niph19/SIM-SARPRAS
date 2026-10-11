@@ -124,9 +124,15 @@ test('category and room CRUD tables have search pagination and related-category 
 });
 
 test('administrator can create fixed-role staff accounts and search their table', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->admin()->create();
 
-    $this->actingAs($admin)->post('/guru', [
+    $this->post('/login', [
+        'email' => $admin->email,
+        'password' => 'asdasdasd',
+    ])->assertRedirect('/dashboard');
+    $this->assertAuthenticatedAs($admin);
+
+    $this->post('/guru', [
         'nama' => 'Guru Contoh',
         'email' => 'guru@example.com',
         'password' => 'StrongPassword123!',
@@ -134,7 +140,8 @@ test('administrator can create fixed-role staff accounts and search their table'
         'role' => 'admin',
     ])->assertRedirect('/guru');
 
-    expect(User::where('email', 'guru@example.com')->first()->role)->toBe('guru');
+    $teacher = User::where('email', 'guru@example.com')->firstOrFail();
+    expect($teacher->role)->toBe('guru');
     $this->get('/guru?search=Guru+Contoh')->assertOk()->assertSee('guru@example.com');
 
     $this->post('/petugas', [
@@ -144,14 +151,38 @@ test('administrator can create fixed-role staff accounts and search their table'
         'password_confirmation' => 'StrongPassword123!',
     ])->assertRedirect('/petugas');
 
-    expect(User::where('email', 'petugas@example.com')->first()->role)->toBe('petugas_sarpras');
+    $staff = User::where('email', 'petugas@example.com')->firstOrFail();
+    expect($staff->role)->toBe('petugas_sarpras');
+
+    $this->post('/logout')->assertRedirect('/');
+    $this->post('/login', [
+        'email' => 'guru@example.com',
+        'password' => 'StrongPassword123!',
+    ])->assertRedirect('/berita-acara');
+    $this->assertAuthenticatedAs($teacher);
+
+    $this->post('/logout')->assertRedirect('/');
+    $this->post('/login', [
+        'email' => 'petugas@example.com',
+        'password' => 'StrongPassword123!',
+    ])->assertRedirect('/dashboard');
+    $this->assertAuthenticatedAs($staff);
 });
 
-test('student reports save optional photos and remain private to their owner', function () {
+test('a registered student can report damage and view their private history and dashboard counts update', function () {
     Storage::fake('public');
     [$category, $room, $facility] = sarprasFixture();
-    $student = User::factory()->create(['role' => 'murid']);
-    $this->actingAs($student)->get('/laporan')->assertOk();
+
+    $this->post('/register', [
+        'nama' => 'Murid Pelapor',
+        'email' => 'murid.pelapor@example.com',
+        'password' => 'StrongPassword123!',
+        'password_confirmation' => 'StrongPassword123!',
+    ])->assertRedirect('/laporan');
+
+    $student = User::where('email', 'murid.pelapor@example.com')->firstOrFail();
+    $this->assertAuthenticatedAs($student);
+    $this->get('/laporan')->assertOk();
 
     $this->actingAs($student)->post('/laporan', [
         'id_ruangan' => $room->id,
@@ -167,6 +198,10 @@ test('student reports save optional photos and remain private to their owner', f
         ->and($report->foto)->not->toBeNull();
     Storage::disk('public')->assertExists($report->foto);
 
+    $this->actingAs(User::factory()->create(['role' => 'admin']))
+        ->get('/dashboard')
+        ->assertViewHas('saranaBermasalah', 1);
+
     $otherStudent = User::factory()->create(['role' => 'murid']);
     LaporanSarana::create([
         'id_murid' => $otherStudent->id,
@@ -176,7 +211,11 @@ test('student reports save optional photos and remain private to their owner', f
         'deskripsi_kerusakan' => 'Kabel terlepas.',
     ]);
 
-    $this->get('/laporan/riwayat')->assertOk()->assertSee('Layar')->assertDontSee('Kabel');
+    $this->actingAs($student)
+        ->get('/laporan/riwayat')
+        ->assertOk()
+        ->assertSee('Layar')
+        ->assertDontSee('Kabel');
 });
 
 test('staff can filter and move reports through allowed statuses and dashboard counts update', function () {
@@ -198,11 +237,16 @@ test('staff can filter and move reports through allowed statuses and dashboard c
     $this->patch('/laporan/'.$report->id.'/status', ['status' => 'dalam_perbaikan'])->assertRedirect();
     expect($report->fresh()->status)->toBe('dalam_perbaikan')
         ->and($facility->fresh()->status_perbaikan)->toBe('dalam_perbaikan');
-    $this->get('/dashboard')->assertSee('1');
+    $this->get('/dashboard')
+        ->assertViewHas('saranaBermasalah', 1)
+        ->assertViewHas('saranaDalamPerbaikan', 1);
 
     $this->patch('/laporan/'.$report->id.'/status', ['status' => 'selesai'])->assertRedirect();
     expect($report->fresh()->status)->toBe('selesai')
         ->and($facility->fresh()->status_perbaikan)->toBe('normal');
+    $this->get('/dashboard')
+        ->assertViewHas('saranaBermasalah', 0)
+        ->assertViewHas('saranaDalamPerbaikan', 0);
     $this->patch('/laporan/'.$report->id.'/status', ['status' => 'pending'])->assertSessionHasErrors('status');
 });
 

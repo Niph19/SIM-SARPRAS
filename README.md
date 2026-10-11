@@ -34,6 +34,14 @@ Aplikasi Laravel untuk pengelolaan sarana prasarana sekolah sesuai role admin, p
 
 Registrasi publik selalu membuat akun `murid`. Akun `guru` dan `petugas_sarpras` dibuat dari menu admin.
 
+Seeder menyediakan data demo yang idempotent untuk menguji pencarian, pagination, dan filter kategori: 12 kategori, 24 ruangan, 120 sarana, 150 laporan, 75 berita acara, serta akun untuk semua role. Jalankan dengan:
+
+```bash
+php artisan db:seed
+```
+
+Akun demo baru menggunakan password `password`. Akun role utama: `admin@gmail.com`, `petugas_sarpras@gmail.com`, `guru@gmail.com`, dan `murid@gmail.com`. Password akun utama yang sudah ada tidak diubah saat seeder dijalankan ulang.
+
 ## Pengujian
 
 Jalankan rangkaian tes otomatis dengan:
