@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('no_berita_acara')->unique();
             $table->foreignId('id_user_pembuat')->constrained('users')->onDelete('cascade');
-            $table->foreignId('id_sarana')->constrained('saranas')->onDelete('cascade');
+            $table->foreignId('id_sarana')->constrained('saranas');
             $table->enum('jenis_tindakan', ['perbaikan', 'pemeliharaan', 'penghapusan']);
             $table->text('keterangan');
-            $table->date('tangga');
+            $table->date('tanggal');
             $table->timestamps();
         });
     }

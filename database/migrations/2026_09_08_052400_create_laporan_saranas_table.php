@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('id_murid')->constrained('users')->onDelete('cascade');
             $table->foreignId('id_sarana')->constrained('saranas')->onDelete('cascade');
             $table->foreignId('id_ruangan')->constrained('ruangans')->onDelete('cascade'); //Lokasi Ruangan
+            $table->string('jenis_kerusakan')->default('Lainnya');
             $table->text('deskripsi_kerusakan');
             $table->string('foto')->nullable();
             $table->enum('status', ['pending', 'dalam_perbaikan', 'selesai', 'ditolak'])->default('pending');

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['nama', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,5 +28,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function laporanSarana(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LaporanSarana::class, 'id_murid');
+    }
+
+    public function beritaAcara(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BeritaAcara::class, 'id_user_pembuat');
+    }
+
+    public function homeRouteName(): string
+    {
+        return match ($this->role) {
+            'admin', 'petugas_sarpras' => 'dashboard',
+            'guru' => 'berita-acara.index',
+            'murid' => 'laporan.index',
+            default => abort(403),
+        };
     }
 }

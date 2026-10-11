@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('kode_sarana')->unique();
             $table->string('nama_sarana');
-            $table->foreignId('id_kategori_sarana')->constrained('kategori_saranas')->onDelete('cascade');
-            $table->foreignId('id_ruangan')->constrained('ruangans')->onDelete('cascade');
+            $table->foreignId('id_kategori_sarana')->constrained('kategori_saranas');
+            $table->foreignId('id_ruangan')->constrained('ruangans');
             $table->enum('kondisi', ['baik', 'rusak_ringan', 'rusak_berat']);
             $table->enum('status_perbaikan', ['normal', 'dalam_perbaikan']);
             $table->integer('jumlah')->default(1);
