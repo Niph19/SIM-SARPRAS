@@ -5,25 +5,38 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <title>{{ config('app.name', 'SatuSarpras') }}</title>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+    <body class="font-mono antialiased bg-gradient-to-br from-primary-50 via-secondary-50 to-white">
+        <!-- Background Pattern -->
+        <div class="fixed inset-0 opacity-30">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 80%, #db277733 0%, transparent 50%), radial-gradient(circle at 80% 20%, #2563eb33 0%, transparent 50%)"></div>
+        </div>
+
+        <div class="relative min-h-screen flex flex-col justify-center items-center px-4 py-12">
+            <!-- Logo Section -->
+            <div class="mb-8 text-center">
+                <a href="/" class="inline-block group">
+                    <x-application-logo class="h-24 w-auto transition-transform duration-300 group-hover:scale-105" />
                 </a>
+                <p class="mt-4 text-sm text-gray-600 font-light tracking-wide">Sistem Informasi Manajemen Sarana Prasarana</p>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+            <!-- Form Container -->
+            <div class="w-full max-w-md">
+                <div class="bg-white/80 backdrop-blur-sm shadow-2xl border border-gray-200/50 overflow-hidden rounded-md p-8">
+                    {{ $slot }}
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-12 text-center">
+                <p class="text-xs text-gray-500 font-light">
+                    © {{ date('Y') }} SatuSarpras. Sistem manajemen fasilitas sekolah yang modern.
+                </p>
             </div>
         </div>
     </body>

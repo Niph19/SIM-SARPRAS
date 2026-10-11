@@ -28,10 +28,40 @@ class UserFactory extends Factory
             'nama' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => static::$password ??= Hash::make('asdasdasd'),
             'role' => 'murid',
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->accountForRole('admin', 'Admin', 'admin@gmail.com');
+    }
+
+    public function petugasSarpras(): static
+    {
+        return $this->accountForRole('petugas_sarpras', 'Petugas Sarpras', 'petugas_sarpras@gmail.com');
+    }
+
+    public function guru(): static
+    {
+        return $this->accountForRole('guru', 'Guru', 'guru@gmail.com');
+    }
+
+    public function murid(): static
+    {
+        return $this->accountForRole('murid', 'Murid', 'murid@gmail.com');
+    }
+
+    private function accountForRole(string $role, string $nama, string $email): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'nama' => $nama,
+            'email' => $email,
+            'password' => static::$password ??= Hash::make('asdasdasd'),
+            'role' => $role,
+        ]);
     }
 
     /**

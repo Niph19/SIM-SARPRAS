@@ -8,12 +8,24 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post('/register', [
-        'name' => 'Test User',
+        'nama' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('laporan.index', absolute: false));
+});
+
+test('registration always assigns the murid role', function () {
+    $this->post('/register', [
+        'nama' => 'Test Student',
+        'email' => 'student@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'role' => 'admin',
+    ])->assertRedirect(route('laporan.index', absolute: false));
+
+    expect(App\Models\User::where('email', 'student@example.com')->value('role'))->toBe('murid');
 });
